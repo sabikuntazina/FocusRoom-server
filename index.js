@@ -84,11 +84,20 @@ async function run() {
     });
   }
 });
-    // homepage featured
-    app.get("/featured", async (req, res) => {
-      const result = await roomsCollection.find().toArray();
-      res.send(result);
-    });
+app.get("/featured", async (req, res) => {
+
+  const query = {
+    availability: true,
+  };
+
+  const result = await roomsCollection
+    .find(query)
+    .sort({ createdAt: -1 })
+    .limit(6)
+    .toArray();
+
+  res.send(result);
+});
 
     app.get("/rooms/:id", async (req, res) => {
       const {id} = req.params
