@@ -29,7 +29,63 @@ async function run() {
     const roomsCollection = db.collection("rooms"); 
     const bookingsCollection = db.collection("bookings")
 
-    app.get("/rooms", async (req, res) => {
+ app.get("/rooms", async (req, res) => {
+  try {
+    const {
+      search,
+      amenities,
+      minPrice,
+      maxPrice,
+    } = req.query;
+
+    let query = {};
+
+    // Search
+    if (search) {
+      query.roomName = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+    // Amenities
+    if (amenities) {
+      query.amenities = {
+        $in: [amenities],
+      };
+    }
+
+    // Price
+    if (minPrice || maxPrice) {
+      query.hourlyRate = {};
+
+      if (minPrice) {
+        query.hourlyRate.$gte = Number(minPrice);
+      }
+
+      if (maxPrice) {
+        query.hourlyRate.$lte = Number(maxPrice);
+      }
+    }
+
+    // console.log(query);
+
+    const result = await roomsCollection
+      .find(query)
+      .toArray();
+
+    res.send(result);
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).send({
+      message: "Failed to fetch rooms",
+    });
+  }
+});
+    // homepage featured
+    app.get("/featured", async (req, res) => {
       const result = await roomsCollection.find().toArray();
       res.send(result);
     });
@@ -49,7 +105,40 @@ async function run() {
     const result=await roomsCollection.insertOne(roomData )
     res.send(result);
 })
-app.get("/allrooms/:userId", async (req, res) => {
+
+app.patch("/rooms/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const updateData = req.body;
+
+    const result = await roomsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          ...updateData,
+        },
+      }
+    );
+
+    res.send(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: "Failed to update room" });
+  }
+});
+
+// DELETE ROOM
+    app.delete('/rooms/:id',async (req, res) => {
+      const id= req.params.id;
+      const query={
+        _id:new ObjectId(id)
+      }
+      const result=await roomsCollection.deleteOne(query)
+  res.send(result);
+    }
+    )
+// mu listing 
+app.get("/mylistings/:userId", async (req, res) => {
   try {
     console.log("route hit");
 
@@ -77,12 +166,33 @@ app.get("/allrooms/:userId", async (req, res) => {
 
 
 // booking 
-    app.post('/bookings',async (req, res) => {  
-      console.log("hi")
-    const bookingData = req.body;
-    const result=await bookingsCollection.insertOne(bookingData )
-    res.send(result);
-})
+app.post('/bookings', async (req, res) => {
+  const bookingData = req.body;
+
+  // check existing booking
+  const existingBooking = await bookingsCollection.findOne({
+    roomName: bookingData.roomName,
+    bookingDate: bookingData.bookingDate,
+    startTime: bookingData.startTime,
+    endTime: bookingData.endTime,
+    status: "confirmed",
+  });
+
+  // if already booked
+  if (existingBooking) {
+    return res.send({
+      message: "already booked",
+      insertedId: null,
+    });
+  }
+
+  // insert booking
+  const result = await bookingsCollection.insertOne(
+    bookingData
+  );
+
+  res.send(result);
+});
 
     app.get("/bookings/:userId", async (req, res) => {
       const {userId} = req.params
@@ -92,6 +202,27 @@ app.get("/allrooms/:userId", async (req, res) => {
       const result = await bookingsCollection.find(query).toArray()
       res.send(result);
     });
+
+     app.patch('/bookings/:id', async (req, res) => {
+  const id = req.params.id;
+
+  const filter = {
+    _id: new ObjectId(id),
+  };
+
+  const updatedDoc = {
+    $set: {
+      status: req.body.status,
+    },
+  };
+
+  const result = await bookingsCollection.updateOne(
+    filter,
+    updatedDoc
+  );
+
+  res.send(result);
+});
   
    await client.db("admin").command({ ping: 1 });
    console.log("Pinged your deployment. You successfully connected to MongoDB!");
