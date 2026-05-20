@@ -8,6 +8,7 @@ const port = process.env.PORT
 app.use(cors())
 app.use(express.json())
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs')
 
 const uri =process.env.MONGODB_URI 
 
@@ -21,6 +22,34 @@ const client = new MongoClient(uri, {
   }
 });
 
+
+// middleware
+
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
+);
+
+const verifyToken = async(req, res, next) => {
+  const authHeader = req?.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+  const token= authHeader.split(" ")[1]
+  if(!token){
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+ try{
+   const {payload} =await jwtVerify(token, JWKS)
+  console.log(payload)
+    next();
+ }
+ catch(err){
+   return res.status(401).send({ message: "Unauthorized access" });
+ }
+}
+
+
+
 async function run() {
  try {
    await client.connect();
@@ -29,7 +58,7 @@ async function run() {
     const roomsCollection = db.collection("rooms"); 
     const bookingsCollection = db.collection("bookings")
 
- app.get("/rooms", async (req, res) => {
+ app.get("/rooms", verifyToken, async (req, res) => {
   try {
     const {
       search,
@@ -84,7 +113,7 @@ async function run() {
     });
   }
 });
-app.get("/featured", async (req, res) => {
+app.get("/featured",verifyToken, async (req, res) => {
 
   const query = {
     availability: true,
@@ -109,7 +138,7 @@ app.get("/featured", async (req, res) => {
       res.send(result);
     });
 
-        app.post('/rooms',async (req, res) => {  
+        app.post('/rooms',verifyToken, async (req, res) => {  
     const roomData = req.body;
     const result=await roomsCollection.insertOne(roomData )
     res.send(result);
@@ -137,17 +166,40 @@ app.patch("/rooms/:id", async (req, res) => {
 });
 
 // DELETE ROOM
-    app.delete('/rooms/:id',async (req, res) => {
-      const id= req.params.id;
-      const query={
-        _id:new ObjectId(id)
-      }
-      const result=await roomsCollection.deleteOne(query)
-  res.send(result);
-    }
-    )
+app.delete("/rooms/:id", async (req, res) => {
+
+  try {
+
+    const id = req.params.id;
+
+    // First find room
+    const room = await roomsCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    // Delete related bookings
+    await bookingsCollection.deleteMany({
+      roomId: id,
+    });
+
+    // Delete room
+    const result = await roomsCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    res.send(result);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).send({
+      message: "Failed to delete room",
+    });
+  }
+});
 // mu listing 
-app.get("/mylistings/:userId", async (req, res) => {
+app.get("/mylistings/:userId",verifyToken,  async (req, res) => {
   try {
     console.log("route hit");
 
@@ -232,6 +284,8 @@ app.post('/bookings', async (req, res) => {
 
   res.send(result);
 });
+
+
   
    await client.db("admin").command({ ping: 1 });
    console.log("Pinged your deployment. You successfully connected to MongoDB!");
