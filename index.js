@@ -128,6 +128,8 @@ app.get("/featured", async (req, res) => {
   res.send(result);
 });
 
+
+
     app.get("/rooms/:id", async (req, res) => {
       const {id} = req.params
       // console.log(id)
@@ -138,13 +140,13 @@ app.get("/featured", async (req, res) => {
       res.send(result);
     });
 
-        app.post('/rooms',verifyToken, async (req, res) => {  
+        app.post('/rooms', async (req, res) => {  
     const roomData = req.body;
     const result=await roomsCollection.insertOne(roomData )
     res.send(result);
 })
 
-app.patch("/rooms/:id", async (req, res) => {
+app.patch("/rooms/:id", verifyToken, async (req, res) => {
   try {
     const id = req.params.id;
     const updateData = req.body;
@@ -199,7 +201,7 @@ app.delete("/rooms/:id", async (req, res) => {
   }
 });
 // mu listing 
-app.get("/mylistings/:userId",verifyToken,  async (req, res) => {
+app.get("/mylistings/:userId",  async (req, res) => {
   try {
     console.log("route hit");
 
@@ -227,7 +229,7 @@ app.get("/mylistings/:userId",verifyToken,  async (req, res) => {
 
 
 // booking 
-app.post('/bookings', async (req, res) => {
+app.post('/bookings',verifyToken, async (req, res) => {
   const bookingData = req.body;
 
   // check existing booking
@@ -255,7 +257,7 @@ app.post('/bookings', async (req, res) => {
   res.send(result);
 });
 
-    app.get("/bookings/:userId", async (req, res) => {
+    app.get("/bookings/:userId",verifyToken, async (req, res) => {
       const {userId} = req.params
       const query= {
         userId : userId
