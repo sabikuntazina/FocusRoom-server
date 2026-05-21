@@ -32,11 +32,11 @@ const JWKS = createRemoteJWKSet(
 const verifyToken = async(req, res, next) => {
   const authHeader = req?.headers.authorization;
   if (!authHeader) {
-    return res.status(401).send({ message: "Unauthorized access" });
+    return res.status(401).send({ message: "Unauthorized access1" });
   }
   const token= authHeader.split(" ")[1]
   if(!token){
-    return res.status(401).send({ message: "Unauthorized access" });
+    return res.status(401).send({ message: "Unauthorized access2" });
   }
  try{
    const {payload} =await jwtVerify(token, JWKS)
@@ -44,7 +44,7 @@ const verifyToken = async(req, res, next) => {
     next();
  }
  catch(err){
-   return res.status(401).send({ message: "Unauthorized access" });
+   return res.status(401).send({ message: "Unauthorized access3" });
  }
 }
 
