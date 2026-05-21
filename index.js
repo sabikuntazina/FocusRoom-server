@@ -58,6 +58,21 @@ async function run() {
     const roomsCollection = db.collection("rooms"); 
     const bookingsCollection = db.collection("bookings")
 
+app.get("/featured", async (req, res) => {
+
+  const query = {
+    availability: true,
+  };
+// console.log(first)
+  const result = await roomsCollection
+    .find(query)
+    .sort({ createdAt: -1 })
+    .limit(6)
+    .toArray();
+
+  res.send(result);
+});
+
  app.get("/rooms", async (req, res) => {
   try {
     const {
@@ -113,20 +128,7 @@ async function run() {
     });
   }
 });
-app.get("/featured", async (req, res) => {
 
-  const query = {
-    availability: true,
-  };
-
-  const result = await roomsCollection
-    .find(query)
-    .sort({ createdAt: -1 })
-    .limit(6)
-    .toArray();
-
-  res.send(result);
-});
 
 
 
