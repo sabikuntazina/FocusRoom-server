@@ -52,13 +52,13 @@ const verifyToken = async(req, res, next) => {
 
 async function run() {
  try {
-   await client.connect();
+  //  await client.connect();
 
    const db = client.db("FocusRoom");  
     const roomsCollection = db.collection("rooms"); 
     const bookingsCollection = db.collection("bookings")
 
- app.get("/rooms", verifyToken, async (req, res) => {
+ app.get("/rooms", async (req, res) => {
   try {
     const {
       search,
@@ -113,7 +113,7 @@ async function run() {
     });
   }
 });
-app.get("/featured",verifyToken, async (req, res) => {
+app.get("/featured", async (req, res) => {
 
   const query = {
     availability: true,
@@ -287,7 +287,7 @@ app.post('/bookings', async (req, res) => {
 
 
   
-   await client.db("admin").command({ ping: 1 });
+  //  await client.db("admin").command({ ping: 1 });
    console.log("Pinged your deployment. You successfully connected to MongoDB!");
  } finally {
   
