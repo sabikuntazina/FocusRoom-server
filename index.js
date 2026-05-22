@@ -209,7 +209,7 @@ app.delete("/rooms/:id", verifyToken, async (req, res) => {
   }
 });
 // mu listing 
-app.get("/mylistings/:userId",  async (req, res) => {
+app.get("/mylistings/:userId", verifyToken,  async (req, res) => {
   try {
     console.log("route hit");
 
