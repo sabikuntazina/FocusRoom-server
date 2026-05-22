@@ -63,7 +63,7 @@ app.get("/featured", async (req, res) => {
   const query = {
     availability: true,
   };
-// console.log(first)
+
   const result = await roomsCollection
     .find(query)
     .sort({ createdAt: -1 })
@@ -84,7 +84,7 @@ app.get("/featured", async (req, res) => {
 
     let query = {};
 
-    // Search
+    // Search er jonno
     if (search) {
       query.roomName = {
         $regex: search,
@@ -92,7 +92,7 @@ app.get("/featured", async (req, res) => {
       };
     }
 
-    // Amenities
+    // Amenities er jonno
     if (amenities) {
       query.amenities = {
         $in: [amenities],
@@ -142,11 +142,15 @@ app.get("/featured", async (req, res) => {
       res.send(result);
     });
 
+
+
         app.post('/rooms', async (req, res) => {  
     const roomData = req.body;
     const result=await roomsCollection.insertOne(roomData )
     res.send(result);
 })
+
+
 
 app.patch("/rooms/:id", verifyToken, async (req, res) => {
   try {
@@ -169,8 +173,10 @@ app.patch("/rooms/:id", verifyToken, async (req, res) => {
   }
 });
 
+
+
 // DELETE ROOM
-app.delete("/rooms/:id", async (req, res) => {
+app.delete("/rooms/:id", verifyToken, async (req, res) => {
 
   try {
 
